@@ -26,9 +26,9 @@
     </table>
 
     <script>
-        const spreadsheetId = 'ID_DEL_TUO_SHEET'; // Sostituisci con l'ID del tuo Sheet
-        const range = 'NOME_FOGLIO!A:Z'; // Es. 'Sheet1!A:Z' per tutte le colonne
-        const apiKey = 'LA_TUA_CHIAVE_API'; // Sostituisci con la tua API key
+        const spreadsheetId = 'https://docs.google.com/spreadsheets/d/11G8nsileMwydMZYbftLcPN84ljb3yP_W3fTjRwmKm3Q/edit?gid=0#gid=0'; // Sostituisci con l'ID del tuo Sheet
+        const range = 'Foglio1'; // Es. 'Sheet1!A:Z' per tutte le colonne
+        const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE'; // Sostituisci con la tua API key
 
         async function fetchData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
