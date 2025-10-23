@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabella da Google Sheet</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        img { max-width: 200px; height: auto; } /* Regola la dimensione delle immagini */
+    </style>
+</head>
+<body>
+    <h1>Tabella in Tempo Reale da Google Sheet</h1>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <!-- Aggiungi intestazioni basate sulle tue colonne, es. -->
+                <th>Colonna1</th>
+                <th>Colonna2</th>
+                <th>Immagine</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const spreadsheetId = 'ID_DEL_TUO_SHEET'; // Sostituisci con l'ID del tuo Sheet
+        const range = 'NOME_FOGLIO!A:Z'; // Es. 'Sheet1!A:Z' per tutte le colonne
+        const apiKey = 'LA_TUA_CHIAVE_API'; // Sostituisci con la tua API key
+
+        async function fetchData() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const rows = data.values;
+
+                const tableBody = document.querySelector('#dataTable tbody');
+                tableBody.innerHTML = ''; // Pulisci la tabella
+
+                rows.forEach((row, index) => {
+                    if (index === 0) return; // Salta la riga di intestazione se presente
+                    const tr = document.createElement('tr');
+                    row.forEach((cell, colIndex) => {
+                        const td = document.createElement('td');
+                        if (colIndex === 2) { // Assumi che la colonna immagine sia la terza (indice 2)
+                            if (cell) {
+                                const img = document.createElement('img');
+                                img.src = cell; // Usa l'URL dalla colonna "URL Immagine"
+                                img.alt = 'Immagine';
+                                td.appendChild(img);
+                            }
+                        } else {
+                            td.textContent = cell;
+                        }
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Errore nel fetch:', error);
+            }
+        }
+
+        // Carica i dati all'avvio
+        fetchData();
+
+        // Opzionale: Refresh automatico ogni 30 secondi per "tempo reale"
+        setInterval(fetchData, 30000);
+    </script>
+</body>
+</html>
