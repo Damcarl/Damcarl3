@@ -27,9 +27,10 @@
         <tbody></tbody>
     </table>
 
-    const spreadsheetId = '11G8nsileMwydMZYbftLcPN84ljb3yP_W3fTjRwmKm3Q'; // ID corretto
-    const range = 'Foglio1!A:Z'; // Nome foglio e intervallo
-    const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE'; // Tua chiave API
+    <script>
+        const spreadsheetId = '11G8nsileMwydMZYbftLcPN84ljb3yP_W3fTjRwmKm3Q';
+        const range = 'Foglio1!A:Z';
+        const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE';
 
         async function fetchData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
@@ -48,12 +49,13 @@
 
                 rows.forEach((row, index) => {
                     if (index === 0) return; // Salta header
+                    console.log('Riga:', row); // Debug
                     const tr = document.createElement('tr');
                     row.forEach((cell, colIndex) => {
                         const td = document.createElement('td');
                         if (colIndex === 6) { // Colonna G (URL Diretto)
                             if (cell) {
-                                console.log('Tentativo caricamento immagine:', cell); // Debug
+                                console.log('URL immagine:', cell);
                                 const img = document.createElement('img');
                                 img.src = cell;
                                 img.alt = 'Immagine';
@@ -61,6 +63,7 @@
                                     console.error('Errore caricamento immagine:', cell);
                                     td.textContent = 'Immagine non caricata';
                                 };
+                                img.onload = () => console.log('Immagine caricata:', cell);
                                 td.appendChild(img);
                             } else {
                                 td.textContent = 'Nessuna immagine';
