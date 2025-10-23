@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <!-- ... altri meta tag e il tuo stile CSS ... -->
+
+    <!-- Lightbox CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet" />
+    
+    <!-- Lightbox JS (va dopo jQuery) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+</head>
+       
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dati dal Google Sheet con Immagini GitHub</title>
@@ -172,16 +183,37 @@
                          }
                     }
 
-                    const imgElement = document.createElement('img');
-                    imgElement.src = `${GITHUB_IMAGES_PATH}${imgFileName}`;
-                    imgElement.alt = `Immagine per riga ${i}`; // Alt text generico
-                    imgElement.onerror = function() {
-                        this.onerror = null; // Evita loop infiniti di errore
-                        this.src = 'https://via.placeholder.com/100x75?text=Img+non+trovata'; // Immagine di fallback standard
-                        this.alt = 'Immagine non trovata';
-                    };
-                    tdImg.appendChild(imgElement);
-                    tr.appendChild(tdImg);
+                const imgElement = document.createElement('img');
+                imgElement.src = `${GITHUB_IMAGES_PATH}${imgFileName}`;
+                imgElement.alt = `Immagine per riga ${i}`; 
+                imgElement.onerror = function() {
+                    this.onerror = null; 
+                    this.src = 'https://via.placeholder.com/100x75?text=Img+non+trovata'; 
+                    this.alt = 'Immagine non trovata';
+                };
+
+                // --- INIZIO NUOVE RIGHE per Lightbox ---
+                const linkElement = document.createElement('a');
+                linkElement.href = `${GITHUB_IMAGES_PATH}${imgFileName}`; // Il link punta all'immagine intera
+                linkElement.setAttribute('data-lightbox', 'gallery'); // Raggruppa le immagini in una galleria
+                linkElement.setAttribute('data-title', rowData[0]); // Il titolo mostrato nel lightbox (es. il contenuto della prima colonna)
+                linkElement.appendChild(imgElement); 
+                tdImg.appendChild(linkElement); 
+                // --- FINE NUOVE RIGHE ---
+                
+                tr.appendChild(tdImg);
+
+                    
+//                    const imgElement = document.createElement('img');
+//                    imgElement.src = `${GITHUB_IMAGES_PATH}${imgFileName}`;
+//                    imgElement.alt = `Immagine per riga ${i}`; // Alt text generico
+//                    imgElement.onerror = function() {
+//                        this.onerror = null; // Evita loop infiniti di errore
+//                       this.src = 'https://via.placeholder.com/100x75?text=Img+non+trovata'; // Immagine di fallback standard
+//                        this.alt = 'Immagine non trovata';
+//                    };
+//                    tdImg.appendChild(imgElement);
+//                    tr.appendChild(tdImg);
 
                     // Aggiungi le altre colonne dal Google Sheet
                     rowData.forEach((cellData, index) => {
