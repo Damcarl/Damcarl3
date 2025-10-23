@@ -25,52 +25,52 @@
         <tbody></tbody>
     </table>
 
-    <script>
-        const spreadsheetId = 'https://docs.google.com/spreadsheets/d/11G8nsileMwydMZYbftLcPN84ljb3yP_W3fTjRwmKm3Q/edit?gid=0#gid=0'; // Sostituisci con l'ID del tuo Sheet
-        const range = 'Foglio1'; // Es. 'Sheet1!A:Z' per tutte le colonne
-        const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE'; // Sostituisci con la tua API key
+ <script>
+    const spreadsheetId = '11G8nsileMwydMZYbftLcPN84ljb3yP_W3fTjRwmKm3Q'; // ID corretto
+    const range = 'Foglio1!A:Z'; // Nome foglio e intervallo
+    const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE'; // Tua chiave API
 
-        async function fetchData() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Errore API: ' + response.status);
-                const data = await response.json();
-                const rows = data.values;
+    async function fetchData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Errore API: ' + response.status);
+            const data = await response.json();
+            const rows = data.values;
 
-                const tableBody = document.querySelector('#dataTable tbody');
-                tableBody.innerHTML = ''; // Pulisci tabella
+            const tableBody = document.querySelector('#dataTable tbody');
+            tableBody.innerHTML = ''; // Pulisci tabella
 
-                rows.forEach((row, index) => {
-                    if (index === 0) return; // Salta header
-                    const tr = document.createElement('tr');
-                    row.forEach((cell, colIndex) => {
-                        const td = document.createElement('td');
-                        if (colIndex === 3) { // Colonna "URL Diretto" (es. D=3)
-                            if (cell) {
-                                const img = document.createElement('img');
-                                img.src = cell; // Usa l'URL diretto
-                                img.alt = 'Immagine';
-                                td.appendChild(img);
-                            }
-                        } else {
-                            td.textContent = cell || '';
+            rows.forEach((row, index) => {
+                if (index === 0) return; // Salta header
+                const tr = document.createElement('tr');
+                row.forEach((cell, colIndex) => {
+                    const td = document.createElement('td');
+                    if (colIndex === 6) { // Colonna G (URL Diretto)
+                        if (cell) {
+                            const img = document.createElement('img');
+                            img.src = cell; // URL diretto da Drive
+                            img.alt = 'Immagine';
+                            td.appendChild(img);
                         }
-                        tr.appendChild(td);
-                    });
-                    tableBody.appendChild(tr);
+                    } else {
+                        td.textContent = cell || '';
+                    }
+                    tr.appendChild(td);
                 });
-            } catch (error) {
-                console.error('Errore:', error);
-                document.querySelector('#dataTable tbody').innerHTML = '<tr><td colspan="3">Errore caricamento dati</td></tr>';
-            }
+                tableBody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Errore:', error);
+            document.querySelector('#dataTable tbody').innerHTML = '<tr><td colspan="3">Errore caricamento dati</td></tr>';
         }
+    }
 
-        // Carica dati all'avvio
-        fetchData();
+    // Carica dati all'avvio
+    fetchData();
 
-        // Refresh ogni 60 secondi
-        setInterval(fetchData, 60000);
-    </script>
+    // Refresh ogni 60 secondi
+    setInterval(fetchData, 60000);
+</script>
 </body>
 </html>
