@@ -71,9 +71,7 @@
     <table id="dataTable" style="display: none;">
         <thead>
             <tr>
-                <!-- Questi sono gli header, li popoleremo dinamicamente con i dati del Google Sheet,
-                     ma possiamo anche aggiungerne uno fisso per l'immagine -->
-                <th>Immagine</th>
+                <!-- Gli header verranno popolati dinamicamente -->
             </tr>
         </thead>
         <tbody>
@@ -83,23 +81,25 @@
 
     <script>
         const GOOGLE_SHEET_ID = '1FZMVNnigcj3Wq7zHrlVmqkAgVDe0H-EP_9o0g4Wr314';
-        const SHEET_NAME = 'Foglio1'; // Assicurati che sia il nome corretto del foglio nel tuo Google Sheet
+        const SHEET_NAME = 'Foglio1'; // VERIFICA CHE SIA IL NOME CORRETTO!
         const IMAGE_COLUMN_INDEX = 1; // La seconda colonna (indice 1, perché gli array partono da 0)
+                                      // Se la colonna dell'immagine è un'altra, modifica qui!
         const GITHUB_IMAGES_PATH = './images/'; // Percorso alla cartella delle immagini nel tuo repo GitHub
+
+        // Funzione per ripulire i dati CSV da apici e spazi extra
+        function cleanCsvValue(value) {
+            return value.trim().replace(/^"|"$/g, ''); // Rimuove spazi iniziali/finali e apici doppi
+        }
 
         async function loadGoogleSheetData() {
             const loadingElement = document.getElementById('loading');
             const errorElement = document.getElementById('error');
             const dataTable = document.getElementById('dataTable');
-            const tableHead = dataTable.querySelector('thead tr');
+            const tableHeadRow = dataTable.querySelector('thead tr');
             const tableBody = dataTable.querySelector('tbody');
 
             try {
-                // Costruisci l'URL per esportare il Google Sheet come CSV
-                // La parte 'gviz/tq' è un'API di Google Visualization che permette di ottenere i dati JSON
-                // Parametri: gid per il foglio, tqx per il formato (out:csv o out:json)
                 const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
-
                 const response = await fetch(url);
 
                 if (!response.ok) {
@@ -107,42 +107,77 @@
                 }
 
                 const csvData = await response.text();
-                const rows = csvData.split('\n');
+                console.log("Dati CSV ricevuti:", csvData); // Stampa i dati CSV per debug
+                const rows = csvData.split('\n').filter(row => row.trim() !== ''); // Filtra righe vuote
 
                 if (rows.length === 0) {
                     throw new Error("Nessun dato trovato nel Google Sheet.");
                 }
 
-                // Parsa l'header e lo mostra nella tabella HTML
-                const headerRow = rows[0].split(',');
-                headerRow.forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header.trim();
-                    tableHead.appendChild(th);
+                // --------- Gestione Intestazione (Header) ---------
+                const headerCells = rows[0].split(',').map(cleanCsvValue);
+                
+                // Aggiungi un header per l'immagine all'inizio
+                const imgTh = document.createElement('th');
+                imgTh.textContent = 'Immagine';
+                tableHeadRow.appendChild(imgTh);
+
+                headerCells.forEach((header, index) => {
+                    // Se la colonna immagine è tra gli header, non la duplicare.
+                    // Aggiungiamo tutti gli header eccetto quello che sarà la colonna immagine
+                    if (index !== IMAGE_COLUMN_INDEX) {
+                        const th = document.createElement('th');
+                        th.textContent = header;
+                        tableHeadRow.appendChild(th);
+                    }
                 });
 
-                // Inserisci i dati nel corpo della tabella HTML
+
+                // --------- Gestione Righe di Dati ---------
                 for (let i = 1; i < rows.length; i++) { // Inizia da 1 per saltare l'header
-                    const rowData = rows[i].split(',');
-                    if (rowData.length < 2 || rowData[1].trim() === '') continue; // Salta righe incomplete o senza nome immagine
+                    const rowData = rows[i].split(',').map(cleanCsvValue);
+                    
+                    // Salta righe che sembrano incomplete o non valide per l'immagine
+                    // Qui assumiamo che se la riga non ha almeno 2 colonne, o la colonna immagine è vuota, la skippiamo
+                    if (rowData.length <= IMAGE_COLUMN_INDEX || rowData[IMAGE_COLUMN_INDEX].trim() === '') {
+                        console.warn(`Skipping row ${i} due to missing image data:`, rowData);
+                        continue; 
+                    }
 
                     const tr = document.createElement('tr');
                     
-                    // Inserisci l'immagine nella prima colonna (che abbiamo creato manualmente)
+                    // --- Gestione Immagine ---
                     const tdImg = document.createElement('td');
-                    const imgFileName = rowData[IMAGE_COLUMN_INDEX].trim();
+                    const rawImgCellContent = rowData[IMAGE_COLUMN_INDEX].trim();
                     
-                    // Rimuovi il prefisso della cartella se presente (es. "cartella/nomefile.jpg" -> "nomefile.jpg")
-                    const cleanFileName = imgFileName.includes('/') 
-                                        ? imgFileName.substring(imgFileName.lastIndexOf('/') + 1)
-                                        : imgFileName;
+                    // L'output che hai mostrato suggerisce una stringa complessa.
+                    // Cerchiamo di estrarre il primo vero nome file JPG/PNG che troviamo.
+                    // Esempio: "Home_Images/78c1de62.Foto.202416.jpg Home_Images/9a21f307.Foto.130722.jpg"
+                    // Vogliamo "78c1de62.Foto.202416.jpg"
+
+                    let imgFileName = '';
+                    const match = rawImgCellContent.match(/([a-zA-Z0-9._-]+\.(jpg|jpeg|png|gif|webp))/i);
+                    if (match && match[1]) {
+                         imgFileName = match[1];
+                         // Rimuovi il prefisso della cartella se presente (es. "Home_Images/nomefile.jpg" -> "nomefile.jpg")
+                         if (imgFileName.includes('/')) {
+                             imgFileName = imgFileName.substring(imgFileName.lastIndexOf('/') + 1);
+                         }
+                    } else {
+                        // Se non troviamo un pattern di file, usiamo l'intero contenuto della cella e proviamo a pulirlo
+                        imgFileName = rawImgCellContent;
+                        // Rimuovi il prefisso della cartella se presente (es. "Home_Images/nomefile.jpg" -> "nomefile.jpg")
+                        if (imgFileName.includes('/')) {
+                             imgFileName = imgFileName.substring(imgFileName.lastIndexOf('/') + 1);
+                         }
+                    }
 
                     const imgElement = document.createElement('img');
-                    imgElement.src = `${GITHUB_IMAGES_PATH}${cleanFileName}`;
-                    imgElement.alt = `Immagine per ${rowData[0]}`; // Usa la prima colonna come alt text
+                    imgElement.src = `${GITHUB_IMAGES_PATH}${imgFileName}`;
+                    imgElement.alt = `Immagine per riga ${i}`; // Alt text generico
                     imgElement.onerror = function() {
                         this.onerror = null; // Evita loop infiniti di errore
-                        this.src = 'placeholder.jpg'; // O un'immagine di fallback
+                        this.src = 'https://via.placeholder.com/100x75?text=Img+non+trovata'; // Immagine di fallback standard
                         this.alt = 'Immagine non trovata';
                     };
                     tdImg.appendChild(imgElement);
@@ -150,11 +185,11 @@
 
                     // Aggiungi le altre colonne dal Google Sheet
                     rowData.forEach((cellData, index) => {
-                        // Salta la colonna dell'immagine perché l'abbiamo già gestita
+                        // Salta la colonna dell'immagine perché l'abbiamo già gestita e posizionata
                         if (index === IMAGE_COLUMN_INDEX) return; 
 
                         const td = document.createElement('td');
-                        td.textContent = cellData.trim();
+                        td.textContent = cellData;
                         tr.appendChild(td);
                     });
                     
@@ -168,10 +203,10 @@
                 console.error("Errore nel caricamento dei dati:", error);
                 loadingElement.style.display = 'none';
                 errorElement.style.display = 'block';
+                errorElement.textContent = `Si è verificato un errore durante il caricamento dei dati: ${error.message}`;
             }
         }
 
-        // Carica i dati non appena la pagina è pronta
         document.addEventListener('DOMContentLoaded', loadGoogleSheetData);
     </script>
 
