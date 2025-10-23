@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabella da Google Sheet</title>
+    <title>Tabella Google Sheet</title>
     <style>
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
-        img { max-width: 200px; height: auto; } /* Regola la dimensione delle immagini */
+        img { max-width: 200px; height: auto; }
     </style>
 </head>
 <body>
-    <h1>Tabella in Tempo Reale da Google Sheet</h1>
+    <h1>Tabella in Tempo Reale</h1>
     <table id="dataTable">
         <thead>
             <tr>
-                <!-- Aggiungi intestazioni basate sulle tue colonne, es. -->
+                <!-- Adatta alle tue colonne -->
                 <th>Colonna1</th>
                 <th>Colonna2</th>
-                <th>Immagine</th>
+                <th>Immagine2</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -34,41 +34,43 @@
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error('Errore API: ' + response.status);
                 const data = await response.json();
                 const rows = data.values;
 
                 const tableBody = document.querySelector('#dataTable tbody');
-                tableBody.innerHTML = ''; // Pulisci la tabella
+                tableBody.innerHTML = ''; // Pulisci tabella
 
                 rows.forEach((row, index) => {
-                    if (index === 0) return; // Salta la riga di intestazione se presente
+                    if (index === 0) return; // Salta header
                     const tr = document.createElement('tr');
                     row.forEach((cell, colIndex) => {
                         const td = document.createElement('td');
-                        if (colIndex === 2) { // Assumi che la colonna immagine sia la terza (indice 2)
+                        if (colIndex === 3) { // Colonna "URL Diretto" (es. D=3)
                             if (cell) {
                                 const img = document.createElement('img');
-                                img.src = cell; // Usa l'URL dalla colonna "URL Immagine"
+                                img.src = cell; // Usa l'URL diretto
                                 img.alt = 'Immagine';
                                 td.appendChild(img);
                             }
                         } else {
-                            td.textContent = cell;
+                            td.textContent = cell || '';
                         }
                         tr.appendChild(td);
                     });
                     tableBody.appendChild(tr);
                 });
             } catch (error) {
-                console.error('Errore nel fetch:', error);
+                console.error('Errore:', error);
+                document.querySelector('#dataTable tbody').innerHTML = '<tr><td colspan="3">Errore caricamento dati</td></tr>';
             }
         }
 
-        // Carica i dati all'avvio
+        // Carica dati all'avvio
         fetchData();
 
-        // Opzionale: Refresh automatico ogni 30 secondi per "tempo reale"
-        setInterval(fetchData, 30000);
+        // Refresh ogni 60 secondi
+        setInterval(fetchData, 60000);
     </script>
 </body>
 </html>
