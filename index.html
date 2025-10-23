@@ -13,64 +13,73 @@
 </head>
 <body>
     <h1>Tabella in Tempo Reale</h1>
+    <button onclick="fetchData()">Aggiorna</button>
     <table id="dataTable">
         <thead>
             <tr>
-                <!-- Adatta alle tue colonne -->
-                <th>Colonna1</th>
-                <th>Colonna2</th>
-                <th>Immagine2</th>
+                <th>Modello</th>
+                <th>Anno</th>
+                <th>Descrizione</th>
+                <th>Prezzo</th>
+                <th>Immagine</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 
- <script>
     const spreadsheetId = '11G8nsileMwydMZYbftLcPN84ljb3yP_W3fTjRwmKm3Q'; // ID corretto
     const range = 'Foglio1!A:Z'; // Nome foglio e intervallo
     const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE'; // Tua chiave API
 
-    async function fetchData() {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Errore API: ' + response.status);
-            const data = await response.json();
-            const rows = data.values;
+        async function fetchData() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
+            console.log('Fetching URL:', url);
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Errore API: ${response.status} ${response.statusText}`);
+                }
+                const data = await response.json();
+                console.log('Dati ricevuti:', data);
+                const rows = data.values;
 
-            const tableBody = document.querySelector('#dataTable tbody');
-            tableBody.innerHTML = ''; // Pulisci tabella
+                const tableBody = document.querySelector('#dataTable tbody');
+                tableBody.innerHTML = '';
 
-            rows.forEach((row, index) => {
-                if (index === 0) return; // Salta header
-                const tr = document.createElement('tr');
-                row.forEach((cell, colIndex) => {
-                    const td = document.createElement('td');
-                    if (colIndex === 6) { // Colonna G (URL Diretto)
-                        if (cell) {
-                            const img = document.createElement('img');
-                            img.src = cell; // URL diretto da Drive
-                            img.alt = 'Immagine';
-                            td.appendChild(img);
+                rows.forEach((row, index) => {
+                    if (index === 0) return; // Salta header
+                    const tr = document.createElement('tr');
+                    row.forEach((cell, colIndex) => {
+                        const td = document.createElement('td');
+                        if (colIndex === 6) { // Colonna G (URL Diretto)
+                            if (cell) {
+                                console.log('Tentativo caricamento immagine:', cell); // Debug
+                                const img = document.createElement('img');
+                                img.src = cell;
+                                img.alt = 'Immagine';
+                                img.onerror = () => {
+                                    console.error('Errore caricamento immagine:', cell);
+                                    td.textContent = 'Immagine non caricata';
+                                };
+                                td.appendChild(img);
+                            } else {
+                                td.textContent = 'Nessuna immagine';
+                            }
+                        } else {
+                            td.textContent = cell || '';
                         }
-                    } else {
-                        td.textContent = cell || '';
-                    }
-                    tr.appendChild(td);
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
                 });
-                tableBody.appendChild(tr);
-            });
-        } catch (error) {
-            console.error('Errore:', error);
-            document.querySelector('#dataTable tbody').innerHTML = '<tr><td colspan="3">Errore caricamento dati</td></tr>';
+            } catch (error) {
+                console.error('Errore dettagliato:', error);
+                document.querySelector('#dataTable tbody').innerHTML = `<tr><td colspan="5">Errore: ${error.message}</td></tr>`;
+            }
         }
-    }
 
-    // Carica dati all'avvio
-    fetchData();
-
-    // Refresh ogni 60 secondi
-    setInterval(fetchData, 60000);
-</script>
+        // Carica dati all'avvio
+        fetchData();
+    </script>
 </body>
 </html>
