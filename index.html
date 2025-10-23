@@ -8,7 +8,7 @@
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
-        img { max-width: 200px; height: auto; }
+        img { max-width: 200px; height: auto; display: block; }
     </style>
 </head>
 <body>
@@ -18,7 +18,7 @@
         <thead>
             <tr>
                 <th>Modello</th>
-                <th>Anno</th>
+                <th>File</th>
                 <th>Descrizione</th>
                 <th>Prezzo</th>
                 <th>Immagine</th>
@@ -32,56 +32,65 @@
         const range = 'Foglio1!A:Z';
         const apiKey = 'AIzaSyBRGwZgpNGnXgzO0dMUJI52P2E6FtThCPE';
 
+        // 🔧 URL base del sito GitHub Pages (stesso repo dove c'è index.html)
+        // Es: https://tuonome.github.io/tuorepo/images/
+        const githubImagesBase = window.location.origin + '/images/';
+
         async function fetchData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
-            console.log('Fetching URL:', url);
+            console.log('Fetching:', url);
+
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Errore API: ${response.status} ${response.statusText}`);
-                }
-                const data = await response.json();
-                console.log('Dati ricevuti:', data);
-                const rows = data.values;
+                if (!response.ok) throw new Error(`Errore API: ${response.status} ${response.statusText}`);
 
+                const data = await response.json();
+                const rows = data.values || [];
                 const tableBody = document.querySelector('#dataTable tbody');
                 tableBody.innerHTML = '';
 
                 rows.forEach((row, index) => {
-                    if (index === 0) return; // Salta header
-                    console.log('Riga:', row); // Debug
+                    if (index === 0) return; // salta intestazione
                     const tr = document.createElement('tr');
-                    row.forEach((cell, colIndex) => {
+
+                    // Mostra le prime 4 colonne (o meno se mancano dati)
+                    for (let i = 0; i < 4; i++) {
                         const td = document.createElement('td');
-                        if (colIndex === 6) { // Colonna G (URL Diretto)
-                            if (cell) {
-                                console.log('URL immagine:', cell);
-                                const img = document.createElement('img');
-                                img.src = cell;
-                                img.alt = 'Immagine';
-                                img.onerror = () => {
-                                    console.error('Errore caricamento immagine:', cell);
-                                    td.textContent = 'Immagine non caricata';
-                                };
-                                img.onload = () => console.log('Immagine caricata:', cell);
-                                td.appendChild(img);
-                            } else {
-                                td.textContent = 'Nessuna immagine';
-                            }
-                        } else {
-                            td.textContent = cell || '';
-                        }
+                        td.textContent = row[i] || '';
                         tr.appendChild(td);
-                    });
+                    }
+
+                    // 🔧 Crea la cella immagine
+                    const imgTd = document.createElement('td');
+                    let fullPath = row[1] || ''; // seconda colonna
+                    let fileName = fullPath.split('/').pop().trim(); // prendi solo nomefile.ext
+
+                    if (fileName) {
+                        const imgUrl = githubImagesBase + encodeURIComponent(fileName);
+                        const img = document.createElement('img');
+                        img.src = imgUrl;
+                        img.alt = fileName;
+                        img.onerror = () => {
+                            console.warn('Immagine non trovata:', imgUrl);
+                            imgTd.textContent = 'Immagine non disponibile';
+                        };
+                        imgTd.appendChild(img);
+                    } else {
+                        imgTd.textContent = 'Nessuna immagine';
+                    }
+
+                    tr.appendChild(imgTd);
                     tableBody.appendChild(tr);
                 });
+
             } catch (error) {
-                console.error('Errore dettagliato:', error);
-                document.querySelector('#dataTable tbody').innerHTML = `<tr><td colspan="5">Errore: ${error.message}</td></tr>`;
+                console.error('Errore:', error);
+                document.querySelector('#dataTable tbody').innerHTML =
+                    `<tr><td colspan="5">Errore: ${error.message}</td></tr>`;
             }
         }
 
-        // Carica dati all'avvio
+        // Carica subito
         fetchData();
     </script>
 </body>
